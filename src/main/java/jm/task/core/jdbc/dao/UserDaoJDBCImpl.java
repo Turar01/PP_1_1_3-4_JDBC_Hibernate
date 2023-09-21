@@ -22,8 +22,9 @@ public class UserDaoJDBCImpl implements UserDao {
                 "age TINYINT" +
                 ")";
 
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(createTableSQL);
+        Connection connection = Util.getConnection();//todo достаточно один раз открыть connection?  например в начале класса.. при инициализации (нужно предусмотреть, если DB - отвалилась)
+        try (PreparedStatement statement = connection.prepareStatement(createTableSQL)) {
+//            PreparedStatement statement = connection.prepareStatement(createTableSQL);
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -31,10 +32,9 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void dropUsersTable() {
-        String dropTableSQL = "DROP TABLE IF EXISTS user";
-
+        String dropTableSQL = "DROP TABLE IF EXISTS user";//todo пробелы лишние... на длинных простынях кода - отвлекают
         try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(dropTableSQL);
+            PreparedStatement statement = connection.prepareStatement(dropTableSQL);//todo повтор кода (и далее), стоит вынести в метод, которым уже пользоваться
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,7 +44,6 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void saveUser(String name, String lastName, byte age) {
         String addUserSQL = "INSERT INTO user (name, lastName, age) VALUES (?, ?, ?)";
-
         try (Connection connection = Util.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(addUserSQL);
             statement.setString(1, name);
@@ -59,7 +58,6 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void removeUserById(long id) {
         String deleteUserSQL = "DELETE FROM user WHERE id = ?";
-
         try (Connection connection = Util.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(deleteUserSQL);
             statement.setLong(1, id);
