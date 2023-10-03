@@ -8,13 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
-
     private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS user (id BIGINT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255), lastName VARCHAR(255), age TINYINT)";
     private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS user";
     private static final String ADD_USER_SQL = "INSERT INTO user (name, lastName, age) VALUES (?, ?, ?)";
     private static final String DELETE_USER_SQL = "DELETE FROM user WHERE id = ?";
     private static final String GET_ALL_USERS_SQL = "SELECT * FROM user";
     private static final String CLEAR_TABLE_SQL = "DELETE FROM user";
+
+    private Connection connection;
+
+    public UserDaoJDBCImpl() {
+        connection = Util.getConnection();
+    }
 
     public void createUsersTable() {
         executeUpdate(CREATE_TABLE_SQL);
@@ -25,8 +30,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        try (Connection connection = Util.getConnection();
-             PreparedStatement statement = connection.prepareStatement(ADD_USER_SQL)) {
+        try (PreparedStatement statement = connection.prepareStatement(ADD_USER_SQL)) {
             statement.setString(1, name);
             statement.setString(2, lastName);
             statement.setByte(3, age);
@@ -43,8 +47,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public List<User> getAllUsers() {
         List<User> userList = new ArrayList<>();
-        try (Connection connection = Util.getConnection();
-             PreparedStatement statement = connection.prepareStatement(GET_ALL_USERS_SQL);
+        try (PreparedStatement statement = connection.prepareStatement(GET_ALL_USERS_SQL);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 User user = new User();
@@ -65,8 +68,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     private void executeUpdate(String sql, Object... params) {
-        try (Connection connection = Util.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
                 statement.setObject(i + 1, params[i]);
             }
@@ -76,4 +78,8 @@ public class UserDaoJDBCImpl implements UserDao {
         }
     }
 
+
 }
+
+
+
