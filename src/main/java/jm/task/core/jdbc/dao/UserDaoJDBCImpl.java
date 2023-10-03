@@ -32,7 +32,7 @@ public class UserDaoJDBCImpl implements UserDao {
             statement.setByte(3, age);
             statement.executeUpdate();
         } catch (SQLException e) {
-            handleSQLException(e);
+            e.printStackTrace();
         }
         System.out.println("Пользователь с именем – " + name + " добавлен в базу данных");
     }
@@ -55,7 +55,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 userList.add(user);
             }
         } catch (SQLException e) {
-            handleSQLException(e);
+            e.printStackTrace();
         }
         return userList;
     }
@@ -72,11 +72,8 @@ public class UserDaoJDBCImpl implements UserDao {
             }
             statement.executeUpdate();
         } catch (SQLException e) {
-            handleSQLException(e);
+            e.printStackTrace();
         }
     }
 
-    private void handleSQLException(SQLException e) {
-        e.printStackTrace(); // Замените на соответствующую обработку ошибок (например, ведение журнала)
-    }
 }
