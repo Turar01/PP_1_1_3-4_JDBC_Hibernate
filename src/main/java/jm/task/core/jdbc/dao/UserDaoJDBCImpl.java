@@ -9,72 +9,43 @@ import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
 
-    public UserDaoJDBCImpl() {
-
-    }
-
+    private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS user (id BIGINT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255), lastName VARCHAR(255), age TINYINT)";
+    private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS user";
+    private static final String ADD_USER_SQL = "INSERT INTO user (name, lastName, age) VALUES (?, ?, ?)";
+    private static final String DELETE_USER_SQL = "DELETE FROM user WHERE id = ?";
+    private static final String GET_ALL_USERS_SQL = "SELECT * FROM user";
+    private static final String CLEAR_TABLE_SQL = "DELETE FROM user";
 
     public void createUsersTable() {
-        String createTableSQL = "CREATE TABLE IF NOT EXISTS user (" +
-                "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
-                "name VARCHAR(255)," +
-                "lastName VARCHAR(255)," +
-                "age TINYINT" +
-                ")";
-
-        Connection connection = Util.getConnection();//todo достаточно один раз открыть connection?  например в начале класса.. при инициализации (нужно предусмотреть, если DB - отвалилась)
-        try (PreparedStatement statement = connection.prepareStatement(createTableSQL)) {
-//            PreparedStatement statement = connection.prepareStatement(createTableSQL);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        executeUpdate(CREATE_TABLE_SQL);
     }
 
     public void dropUsersTable() {
-        String dropTableSQL = "DROP TABLE IF EXISTS user";//todo пробелы лишние... на длинных простынях кода - отвлекают
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(dropTableSQL);//todo повтор кода (и далее), стоит вынести в метод, которым уже пользоваться
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
+        executeUpdate(DROP_TABLE_SQL);
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        String addUserSQL = "INSERT INTO user (name, lastName, age) VALUES (?, ?, ?)";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(addUserSQL);
+        try (Connection connection = Util.getConnection();
+             PreparedStatement statement = connection.prepareStatement(ADD_USER_SQL)) {
             statement.setString(1, name);
             statement.setString(2, lastName);
             statement.setByte(3, age);
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            handleSQLException(e);
         }
-        System.out.println("User с именем – " + name + " добавлен в базу данных");
+        System.out.println("Пользователь с именем – " + name + " добавлен в базу данных");
     }
 
     public void removeUserById(long id) {
-        String deleteUserSQL = "DELETE FROM user WHERE id = ?";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(deleteUserSQL);
-            statement.setLong(1, id);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
+        executeUpdate(DELETE_USER_SQL, id);
     }
 
     public List<User> getAllUsers() {
         List<User> userList = new ArrayList<>();
-        String getAllUsersSQL = "SELECT * FROM user";
-
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(getAllUsersSQL);
-            ResultSet resultSet = statement.executeQuery();
+        try (Connection connection = Util.getConnection();
+             PreparedStatement statement = connection.prepareStatement(GET_ALL_USERS_SQL);
+             ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 User user = new User();
                 user.setId(resultSet.getLong("id"));
@@ -84,22 +55,28 @@ public class UserDaoJDBCImpl implements UserDao {
                 userList.add(user);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            handleSQLException(e);
         }
-
         return userList;
     }
 
-
     public void cleanUsersTable() {
-        String clearTableSQL = "DELETE FROM user";
+        executeUpdate(CLEAR_TABLE_SQL);
+    }
 
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(clearTableSQL);
+    private void executeUpdate(String sql, Object... params) {
+        try (Connection connection = Util.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                statement.setObject(i + 1, params[i]);
+            }
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            handleSQLException(e);
         }
+    }
 
+    private void handleSQLException(SQLException e) {
+        e.printStackTrace(); // Замените на соответствующую обработку ошибок (например, ведение журнала)
     }
 }
